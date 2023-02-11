@@ -1,6 +1,7 @@
 mod transformers;
 
 use std::fmt::Debug;
+use base64::Engine;
 use error_stack::{ResultExt, IntoReport};
 
 use crate::{
@@ -15,7 +16,7 @@ use crate::{
         self,
         api::{self, ConnectorCommon, ConnectorCommonExt},
         ErrorResponse, Response,
-    }
+    }, consts
 };
 
 
@@ -23,6 +24,27 @@ use transformers as forte;
 
 #[derive(Debug, Clone)]
 pub struct Forte;
+
+impl Forte {
+    pub fn get_authorization_headers(
+        &self,
+        auth: forte::ForteAuthType
+    ) -> CustomResult< Vec<(String,String)> , errors::ConnectorError> {
+
+        let forte::ForteAuthType {
+            api_access_id,
+            organization_id,
+            api_secret_key
+        } = auth;
+
+        let raw_basic_token = format!("{api_access_id}:{api_secret_key}");
+        let basic_token = "Basic ".to_string() + &consts::BASE64_ENGINE.encode(raw_basic_token.as_bytes());
+        Ok(vec![
+            (headers::AUTHORIZATION.to_string(),basic_token),
+            ("X-Forte-Auth-Organization-Id".to_string(),organization_id)
+        ])
+    }
+}
 
 impl<Flow, Request, Response> ConnectorCommonExt<Flow, Request, Response> for Forte 
 where
@@ -42,8 +64,7 @@ impl ConnectorCommon for Forte {
     }
 
     fn common_get_content_type(&self) -> &'static str {
-        todo!()
-        // Ex: "application/x-www-form-urlencoded"
+        "application/json"
     }
 
     fn base_url<'a>(&self, connectors: &'a settings::Connectors) -> &'a str {
@@ -54,7 +75,8 @@ impl ConnectorCommon for Forte {
         let auth: forte::ForteAuthType = auth_type
             .try_into()
             .change_context(errors::ConnectorError::FailedToObtainAuthType)?;
-        Ok(vec![(headers::AUTHORIZATION.to_string(), auth.api_key)])
+        let auth_headers = self.get_authorization_headers(auth)?;
+        Ok(auth_headers)
     }
 }
 
