@@ -222,9 +222,13 @@ impl ConnectorIntegration<api::Capture, types::PaymentsCaptureData, types::Payme
 
     fn get_request_body(
         &self,
-        _req: &types::PaymentsCaptureRouterData,
+        req: &types::PaymentsCaptureRouterData,
     ) -> CustomResult<Option<String>, errors::ConnectorError> {
-        todo!()
+        let connector_req = forte::ForteCaptureRequest::try_from(req)?;
+        let forte_req =
+            utils::Encode::<forte::ForteCaptureRequest>::encode_to_string_of_json(&connector_req)
+                .change_context(errors::ConnectorError::RequestEncodingFailed)?;
+        Ok(Some(forte_req))
     }
 
     fn build_request(

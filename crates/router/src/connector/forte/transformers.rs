@@ -160,10 +160,11 @@ impl<F,T> TryFrom<types::ResponseRouterData<F, FortePaymentsResponse, T, types::
             "A01" => FortePaymentStatus::Succeeded,
             _ => FortePaymentStatus::Failed
         };
+        let rsc = item.response.authorization_code.to_string() + &" ".to_string() + &item.response.transaction_id.to_string();  
         Ok(Self {
             status: enums::AttemptStatus::from(payment_status),
             response: Ok(types::PaymentsResponseData::TransactionResponse {
-                resource_id: types::ResponseId::ConnectorTransactionId(item.response.transaction_id),
+                resource_id: types::ResponseId::ConnectorTransactionId(rsc),
                 redirection_data: None,
                 redirect: false,
                 mandate_reference: None,
@@ -236,3 +237,78 @@ impl TryFrom<types::RefundsResponseRouterData<api::RSync, RefundResponse>> for t
 //TODO: Fill the struct with respective fields
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ForteErrorResponse {}
+
+
+
+
+
+
+
+// Capture 
+
+#[derive(Default, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ForteCaptureRequest {
+    action: String,
+    transaction_id: String,
+    authorization_code: String,
+}
+
+impl TryFrom<&types::PaymentsCaptureRouterData> for ForteCaptureRequest {
+    type Error = error_stack::Report<errors::ConnectorError>;
+    fn try_from(item: &types::PaymentsCaptureRouterData) -> Result<Self, Self::Error> {
+        let (auth_code,trn_id) = item.request.connector_transaction_id.split_once(' ').unwrap();
+        Ok(Self {
+             action: "capture".to_string(),
+             transaction_id: trn_id.to_string(),
+             authorization_code: auth_code.to_string()
+        })
+    }
+}
+
+
+
+#[derive(Default, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct CaptureResponseStatus {
+    environment:String,
+    response_type:String,
+    response_code:String,
+    response_desc:String,
+    authorization_code:String
+}
+// Capture Response 
+#[derive(Default, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub struct ForteCaptureResponse {
+    transaction_id: String,
+    original_transaction_id: String,
+    entered_by: String,
+    response: CaptureResponseStatus
+}
+
+impl TryFrom<types::PaymentsCaptureResponseRouterData<ForteCaptureResponse>>
+    for types::PaymentsCaptureRouterData
+{
+    type Error = error_stack::Report<errors::ConnectorError>;
+    fn try_from(
+        item: types::PaymentsCaptureResponseRouterData<ForteCaptureResponse>,
+    ) -> Result<Self, Self::Error> {
+        let capture_status = match item.response.response.response_code.as_str() {
+            "A01" => FortePaymentStatus::Succeeded,
+            _ => FortePaymentStatus::Failed
+        };
+        Ok(Self {
+            status: enums::AttemptStatus::from(capture_status),
+            response: Ok(types::PaymentsResponseData::TransactionResponse {
+                resource_id: types::ResponseId::ConnectorTransactionId(item.response.transaction_id),
+                redirect: false,
+                redirection_data: None,
+                mandate_reference: None,
+                connector_metadata: None,
+            }),
+            amount_captured: None,
+            ..item.data
+        })
+    }
+}
