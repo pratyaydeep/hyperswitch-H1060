@@ -15,13 +15,28 @@ impl TryFrom<&types::PaymentsAuthorizeRouterData> for FortePaymentsRequest  {
 //TODO: Fill the struct with respective fields
 // Auth Struct
 pub struct ForteAuthType {
-    pub(super) api_key: String
+    pub(super) api_access_id: String,
+    pub(super) organization_id: String,
+    pub(super) api_secret_key: String
 }
 
 impl TryFrom<&types::ConnectorAuthType> for ForteAuthType  {
     type Error = error_stack::Report<errors::ConnectorError>;
-    fn try_from(_auth_type: &types::ConnectorAuthType) -> Result<Self, Self::Error> {
-        todo!()
+    fn try_from(auth_type: &types::ConnectorAuthType) -> Result<Self, Self::Error> {
+        if let types::ConnectorAuthType::SignatureKey {
+            api_key,
+            key1,
+            api_secret,
+        } = auth_type
+        {
+            Ok(Self {
+                api_access_id: api_key.to_string(),
+                organization_id: key1.to_string(),
+                api_secret_key: api_secret.to_string(),
+            })
+        } else {
+            Err(errors::ConnectorError::FailedToObtainAuthType)?
+        }
     }
 }
 // PaymentsResponse
