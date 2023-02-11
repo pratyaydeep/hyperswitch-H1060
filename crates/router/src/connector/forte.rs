@@ -54,10 +54,15 @@ where
 {
     fn build_headers(
         &self,
-        _req: &types::RouterData<Flow, Request, Response>,
+        req: &types::RouterData<Flow, Request, Response>,
         _connectors: &settings::Connectors,
     ) -> CustomResult<Vec<(String, String)>, errors::ConnectorError> {
-        todo!()
+        let auth: forte::ForteAuthType =
+            forte::ForteAuthType::try_from(&req.connector_auth_type)?;
+        let content_type = ConnectorCommon::common_get_content_type(self);
+        let mut common_headers = self.get_authorization_headers(auth)?;
+        common_headers.push((headers::CONTENT_TYPE.to_string(),content_type.to_string()));
+        Ok(common_headers)
     }
 }
 
