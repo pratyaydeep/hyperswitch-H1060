@@ -17,6 +17,7 @@ impl TryFrom<&types::PaymentsAuthorizeRouterData> for FortePaymentsRequest  {
 pub struct ForteAuthType {
     pub(super) api_access_id: String,
     pub(super) organization_id: String,
+    pub(super) location_id: String,
     pub(super) api_secret_key: String
 }
 
@@ -29,9 +30,11 @@ impl TryFrom<&types::ConnectorAuthType> for ForteAuthType  {
             api_secret,
         } = auth_type
         {
+            let (org_id, loc_id) = key1.split_once('-').unwrap();
             Ok(Self {
                 api_access_id: api_key.to_string(),
-                organization_id: key1.to_string(),
+                organization_id: org_id.to_string(),
+                location_id: loc_id.to_string(),
                 api_secret_key: api_secret.to_string(),
             })
         } else {
