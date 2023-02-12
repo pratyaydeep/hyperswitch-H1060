@@ -5,8 +5,8 @@ use masking::PeekInterface;
 #[derive(Default, Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub struct FortePaymentsRequest {
-        authorization_amount:i64,
-        subtotal_amount:i64,
+        authorization_amount:f64,
+        subtotal_amount:f64,
         billing_address:BillingAddress,
         card:Card
     }
@@ -49,7 +49,7 @@ impl TryFrom<&types::PaymentsAuthorizeRouterData> for FortePaymentsRequest  {
                     first_name: fname.to_string(), 
                     last_name : lname.to_string() 
                 };
-                let authorization_amount = item.request.amount;
+                let authorization_amount:f64 = item.request.amount as f64;
                 let subtotal_amount = authorization_amount;
                 Ok(Self {
                     authorization_amount,
@@ -78,7 +78,7 @@ pub struct ForteAuthType {
 impl TryFrom<&types::ConnectorAuthType> for ForteAuthType  {
     type Error = error_stack::Report<errors::ConnectorError>;
     fn try_from(auth_type: &types::ConnectorAuthType) -> Result<Self, Self::Error> {
-        if let types::ConnectorAuthType::SignatureKey {
+            if let types::ConnectorAuthType::SignatureKey {
             api_key,
             key1,
             api_secret,
@@ -145,7 +145,7 @@ pub struct FortePaymentsResponse {
     transaction_id:String,
     location_id:String,
     action:String,
-    authorization_amount:i64,
+    authorization_amount:f64,
     authorization_code: String,
     entered_by: String,
     billing_address:BillingAddress,

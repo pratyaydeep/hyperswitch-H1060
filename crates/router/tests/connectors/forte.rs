@@ -174,7 +174,7 @@ async fn should_sync_manually_captured_refund() {
 #[actix_web::test]
 async fn should_make_payment() {
     let authorize_response = CONNECTOR.make_payment(None, None).await.unwrap();
-    assert_eq!(authorize_response.status, enums::AttemptStatus::Charged);
+    assert_eq!(authorize_response.status, enums::AttemptStatus::Authorized);
 }
 
 // Synchronizes a payment using the automatic capture flow (Non 3DS).
