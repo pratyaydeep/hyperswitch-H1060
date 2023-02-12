@@ -48,3 +48,9 @@ api_secret = "MySecretKey"
 key1 = "Merchant Id"
 api_key = "API Key"
 api_secret = "API Secret Key"
+
+
+[forte]
+api_key = "f2cda2d1b56dd091b4f6e9b6241a42ac"
+key1 = "org_436870-loc_314155"
+api_secret = "5570d29b7ba0967c5176e7e3c1228d5b"
